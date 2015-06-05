@@ -25,7 +25,13 @@ def make_slave(ip):
     pass
 
 def destroy_cluster(master,slave_list):
-    pass
+	
+	master_name ="master"+ master[-1].zfill(2)
+    run("lxc-destroy -n %s" %master_name)
+    
+    for slave_ip in slave_list:
+    	slave_name ="slave"+ slave_ip[-1].zfill(2)
+    	run("lxc-destroy -n %s" % slave_name)
 
 
 
