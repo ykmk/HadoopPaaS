@@ -17,6 +17,7 @@ def create_cluster(master,slave_list):
 def make_lxc(ip):
     pass
 
+
 def make_master(ip, slave_list):
     pass
 
