@@ -2,15 +2,8 @@
 from fabric.api import run, env
 from fabric.exceptions import NetworkError
 import time
-#env.hosts = ["157.82.3.143"]
 env.user = 'root'
 env.key_filename = '/home/id_rsa'
-
-
-def sample():
-    run("stop-all.sh")
-    run("start-all.sh")
-    run("hadoop jar /home/hadoop/hadoop-2.6.0/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.6.0.jar pi 100 100")
 
 
 def get_lxc_name(ip, is_master):
@@ -125,8 +118,8 @@ def create_cluster(master, *slave_list):
 
 def destroy_cluster(master, *slave_list):
     master_name = get_lxc_name(master, is_master=True)
-    remote_run(master,"lxc-stop -n " + master_name)
-    remote_run(master,"lxc-destroy -n " + master_name)
+    remote_run(master, "lxc-stop -n " + master_name)
+    remote_run(master, "lxc-destroy -n " + master_name)
     
     for slave_ip in slave_list:
         slave_name = get_lxc_name(slave_ip, is_master=False)
@@ -134,14 +127,15 @@ def destroy_cluster(master, *slave_list):
         remote_run(slave_ip, "lxc-destroy -n " + slave_name)
 
 
-if __name__ == '__main__':
-    master = '157.82.3.142'
-    slave1 = '157.82.3.143'
-    slave2 = '157.82.3.146'
-    create_cluster(master, slave1, slave2)
-    
+def run_pi_test(master):
     env.host_string = master
     env.user        = 'hadoop'
     run('hadoop jar /home/hadoop/hadoop-2.6.0/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.6.0.jar pi 100 100')
 
 
+if __name__ == '__main__':
+    master = '157.82.3.142'
+    slave1 = '157.82.3.143'
+    slave2 = '157.82.3.146'
+    create_cluster(master, slave1, slave2)
+    run_pi_test(master)
