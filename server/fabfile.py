@@ -1,7 +1,8 @@
 # coding: utf-8
-from fabric.api import run, env
+from fabric.api import run, env, put
 from fabric.exceptions import NetworkError
-import time
+import time, random
+source_str = 'abcdefghijklmnopqrstuvwxyz'
 env.user = 'root'
 env.key_filename = '/home/id_rsa'
 
@@ -130,7 +131,33 @@ def destroy_cluster(master, *slave_list):
 def run_pi_test(master):
     env.host_string = master
     env.user        = 'hadoop'
+    print('execute jar file...')
     run('hadoop jar /home/hadoop/hadoop-2.6.0/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.6.0.jar pi 100 100')
+
+
+def run_program(master,localpath,*options):
+    """
+    masterが実行したいクラスタのmasterのip
+    localpathに実行したいファイルがある想定
+    optionsは実行したいjarファイルのargs
+    """
+    #まずファイル転送
+    env.host_string = '157.82.3.140'
+    env.user        = 'root'
+    env.key_filename ='/home/id_rsa'
+    random_str      = "".join([random.choice(source_str) for x in xrange(5)])
+    remotepath      = '/home/hadoop/program_' + random_str + '.jar '
+    run("scp -i /home/id_rsa_600 " + localpath + " hadoop@" + master + ":" + remotepath)
+
+    #ファイル実行
+    print('execute jar file...')
+    env.host_string = master
+    env.user        = 'hadoop'
+    run('hadoop jar ' + remotepath + " ".join(options))
+
+    #ファイル削除
+    print('delete file...')
+    run('rm ' + remotepath)
 
 
 if __name__ == '__main__':
