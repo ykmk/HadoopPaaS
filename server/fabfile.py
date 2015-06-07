@@ -1,5 +1,7 @@
 # coding: utf-8
 from fabric.api import run, env
+from fabric.exceptions import NetworkError
+import time
 #env.hosts = ["157.82.3.143"]
 env.user = 'root'
 env.key_filename = '/home/id_rsa'
@@ -49,7 +51,7 @@ def make_lxc(ip, is_master):
     remote_run(ip, command)
 
 
-def create_cluster(master, slave_list):
+def create_cluster(master, *slave_list):
 
     def get_all_lxc_names():
         lxc_names = [get_lxc_name(master, True)]
@@ -110,24 +112,33 @@ def create_cluster(master, slave_list):
     # 5. Hadoopクラスタを起動
     env.host_string = master
     env.user        = 'hadoop'
-    run('hdfs namenode -format')
+    while True:
+        try:
+            run('hdfs namenode -format')
+        except NetworkError:
+            time.sleep(1)
+        else:
+            break
     run('start-dfs.sh')
     run('start-yarn.sh')
 
 
-def destroy_cluster(master, slave_list):
+def destroy_cluster(master, *slave_list):
     master_name = get_lxc_name(master, is_master=True)
-    run("lxc-destroy -n " + master_name)
+    remote_run(master,"lxc-stop -n " + master_name)
+    remote_run(master,"lxc-destroy -n " + master_name)
     
     for slave_ip in slave_list:
         slave_name = get_lxc_name(slave_ip, is_master=False)
-        run("lxc-destroy -n " + slave_name)
+        remote_run(slave_ip, "lxc-stop -n " + slave_name)
+        remote_run(slave_ip, "lxc-destroy -n " + slave_name)
 
 
 if __name__ == '__main__':
     master = '157.82.3.142'
-    slaves = ['157.82.3.144', '157.82.3.146']
-    create_cluster(master, slaves)
+    slave1 = '157.82.3.143'
+    slave2 = '157.82.3.146'
+    create_cluster(master, slave1, slave2)
     
     env.host_string = master
     env.user        = 'hadoop'
