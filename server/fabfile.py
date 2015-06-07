@@ -1,5 +1,5 @@
 # coding: utf-8
-from fabric.api import run, env, put
+from fabric.api import run, env
 from fabric.exceptions import NetworkError
 import time, random
 source_str = 'abcdefghijklmnopqrstuvwxyz'
